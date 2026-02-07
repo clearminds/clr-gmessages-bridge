@@ -25,7 +25,7 @@ func DefaultDataDir() string {
 		return dir
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".local", "share", "gmessages-mcp")
+	return filepath.Join(home, ".local", "share", "openmessages")
 }
 
 func New(logger zerolog.Logger) (*App, error) {
