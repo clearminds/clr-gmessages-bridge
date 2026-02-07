@@ -526,7 +526,7 @@ footer a:hover { color: var(--accent); }
     <a href="#features">Features</a>
     <a href="#setup">Setup</a>
     <a href="https://github.com/maxghenis/openmessages" target="_blank">GitHub</a>
-    <a href="https://github.com/maxghenis/openmessages" class="nav-cta">Get started</a>
+    <a href="https://github.com/maxghenis/openmessages/releases/latest" class="nav-cta">Download</a>
   </div>
 </nav>
 
@@ -545,13 +545,13 @@ footer a:hover { color: var(--accent); }
   </p>
 
   <div class="hero-actions">
-    <a href="https://github.com/maxghenis/openmessages" class="btn-primary">
-      View on GitHub
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    <a href="https://github.com/maxghenis/openmessages/releases/latest" class="btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Mac
     </a>
-    <a href="#setup" class="btn-secondary">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-      Quick start
+    <a href="https://github.com/maxghenis/openmessages" class="btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      View source
     </a>
   </div>
 
@@ -647,10 +647,10 @@ footer a:hover { color: var(--accent); }
 
     <div class="feature-card">
       <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
       </div>
-      <h3>Web interface</h3>
-      <p>A clean, responsive messaging UI served from the same binary. Dark theme, keyboard shortcuts, live updates. No Electron needed.</p>
+      <h3>Native macOS app</h3>
+      <p>A real .app with menu bar presence, native notifications, and auto-launch. Not Electron — a Swift app with WebKit. 28 MB universal binary.</p>
     </div>
 
     <div class="feature-card">
@@ -658,35 +658,35 @@ footer a:hover { color: var(--accent); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
       </div>
       <h3>Open source</h3>
-      <p>MIT licensed. Single Go binary, no dependencies to install. Built on the battle-tested mautrix/gmessages library.</p>
+      <p>MIT licensed. Swift + Go, no dependencies to install. Built on the battle-tested mautrix/gmessages library.</p>
     </div>
   </div>
 </section>
 
 <section class="how-it-works" id="setup">
   <div class="section-label">Quick start</div>
-  <div class="section-title">Three steps to get going</div>
+  <div class="section-title">Up and running in 60 seconds</div>
 
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
       <div>
-        <h3>Build</h3>
-        <p>Clone the repo and build. Single command: <code>go build -o openmessages .</code></p>
+        <h3>Download</h3>
+        <p>Grab <code>OpenMessages.dmg</code> from <a href="https://github.com/maxghenis/openmessages/releases/latest" style="color:var(--accent)">the latest release</a> and drag to Applications. Universal binary, works on all Macs.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
       <div>
-        <h3>Pair</h3>
-        <p>Run <code>./openmessages pair</code> and scan the QR code with Google Messages on your phone. One-time setup, session persists.</p>
+        <h3>Pair your phone</h3>
+        <p>Open the app and scan the QR code with Google Messages on your Android phone. One-time setup — your session persists across restarts.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div>
-        <h3>Run</h3>
-        <p>Start with <code>./openmessages serve</code>. Opens a web UI on port 7007 and an MCP server on stdio. Add to your <code>~/.mcp.json</code> for Claude Code.</p>
+        <h3>Start messaging</h3>
+        <p>Your conversations sync instantly. The app lives in your menu bar. For AI integration, add the bundled MCP server to your <code>~/.mcp.json</code> for Claude Code.</p>
       </div>
     </div>
   </div>
