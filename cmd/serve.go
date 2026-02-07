@@ -40,7 +40,7 @@ func RunServe(logger zerolog.Logger) error {
 	if port == "" {
 		port = "7007"
 	}
-	httpHandler := web.APIHandler(a.Store, a.Client, logger)
+	httpHandler := web.APIHandler(a.Store, a.Client, logger, a.DeepBackfill)
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return fmt.Errorf("listen on port %s: %w", port, err)

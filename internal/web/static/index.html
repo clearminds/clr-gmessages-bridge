@@ -887,6 +887,10 @@ html, body {
           } else {
             html += `<div style="font-size:13px;color:var(--text-secondary);padding:6px 0">Attachment: ${escapeHtml(m.MimeType || 'file')}</div>`;
           }
+        } else if (m.MimeType) {
+          // Media metadata exists but media ID expired/unavailable
+          const icon = (m.MimeType || '').startsWith('image/') ? '🖼️' : '📎';
+          html += `<div style="font-size:13px;color:var(--text-muted);padding:6px 0">${icon} ${escapeHtml(m.MimeType)} (media unavailable)</div>`;
         }
         if (m.Body) {
           html += `<div class="msg-body">${escapeHtml(m.Body)}</div>`;

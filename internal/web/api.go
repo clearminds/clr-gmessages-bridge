@@ -24,7 +24,8 @@ var staticFS embed.FS
 
 // APIHandler creates the HTTP handler with JSON API routes and static file serving.
 // The client may be nil (disconnected state).
-func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger) http.Handler {
+// onDeepBackfill is an optional callback triggered by POST /api/backfill.
+func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger, onDeepBackfill ...func()) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/conversations", func(w http.ResponseWriter, r *http.Request) {
@@ -243,6 +244,19 @@ func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger) http
 		writeJSON(w, map[string]any{
 			"success": resp.GetSuccess(),
 		})
+	})
+
+	mux.HandleFunc("/api/backfill", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httpError(w, "method not allowed", 405)
+			return
+		}
+		if len(onDeepBackfill) > 0 && onDeepBackfill[0] != nil {
+			go onDeepBackfill[0]()
+			writeJSON(w, map[string]string{"status": "started"})
+		} else {
+			httpError(w, "deep backfill not available", 501)
+		}
 	})
 
 	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
