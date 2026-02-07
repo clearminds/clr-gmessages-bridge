@@ -206,8 +206,10 @@ func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger) http
 			return
 		}
 		var req struct {
-			MessageID string `json:"message_id"`
-			Emoji     string `json:"emoji"`
+			ConversationID string `json:"conversation_id"`
+			MessageID      string `json:"message_id"`
+			Emoji          string `json:"emoji"`
+			Action         string `json:"action"` // "add", "remove", "switch"; default "add"
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			httpError(w, "invalid JSON: "+err.Error(), 400)
@@ -221,8 +223,26 @@ func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger) http
 			httpError(w, "not connected to Google Messages", 503)
 			return
 		}
-		// TODO: call cli.GM.SendReaction
-		writeJSON(w, map[string]string{"status": "ok"})
+
+		// Get SIM payload from conversation
+		var sim *gmproto.SIMPayload
+		if req.ConversationID != "" {
+			if conv, err := cli.GM.GetConversation(req.ConversationID); err == nil {
+				if sc := conv.GetSimCard(); sc != nil {
+					sim = sc.GetSIMData().GetSIMPayload()
+				}
+			}
+		}
+
+		payload := BuildReactionPayload(req.MessageID, req.Emoji, req.Action, sim)
+		resp, err := cli.GM.SendReaction(payload)
+		if err != nil {
+			httpError(w, "send reaction: "+err.Error(), 502)
+			return
+		}
+		writeJSON(w, map[string]any{
+			"success": resp.GetSuccess(),
+		})
 	})
 
 	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
@@ -270,6 +290,26 @@ func BuildSendPayload(conversationID, message, replyToID, participantID string, 
 		}
 	}
 	return req
+}
+
+// BuildReactionPayload constructs a SendReactionRequest using gmproto.MakeReactionData
+// for proper emoji type mapping, matching the mautrix bridge format.
+func BuildReactionPayload(messageID, emoji, action string, sim *gmproto.SIMPayload) *gmproto.SendReactionRequest {
+	var a gmproto.SendReactionRequest_Action
+	switch strings.ToLower(action) {
+	case "remove":
+		a = gmproto.SendReactionRequest_REMOVE
+	case "switch":
+		a = gmproto.SendReactionRequest_SWITCH
+	default:
+		a = gmproto.SendReactionRequest_ADD
+	}
+	return &gmproto.SendReactionRequest{
+		MessageID:    messageID,
+		ReactionData: gmproto.MakeReactionData(emoji),
+		Action:       a,
+		SIMPayload:   sim,
+	}
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

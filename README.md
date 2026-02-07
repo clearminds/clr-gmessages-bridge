@@ -1,14 +1,20 @@
-# openmessages
+# OpenMessages
 
-MCP server for Google Messages (SMS + RCS). Gives Claude Code full read/write access to text messages without browser automation.
+An open-source Google Messages client with MCP support. Read and send SMS/RCS from Claude Code, a web UI, or any MCP-compatible tool.
 
 Built on [mautrix/gmessages](https://github.com/mautrix/gmessages) (libgm) for the Google Messages protocol and [mcp-go](https://github.com/mark3labs/mcp-go) for the MCP server.
 
-## Setup
+## Quick start
 
-### 1. Build
+### Prerequisites
+
+- **Go 1.22+** ([install](https://go.dev/dl/))
+- **Google Messages** on your Android phone
+
+### 1. Clone and build
 
 ```bash
+git clone https://github.com/MaxGhenis/openmessages.git
 cd openmessages
 go build -o openmessages .
 ```
@@ -19,16 +25,26 @@ go build -o openmessages .
 ./openmessages pair
 ```
 
-Scan the QR code with Google Messages (Settings > Device pairing > Pair a device). Session is saved to `~/.local/share/openmessages/session.json`.
+A QR code appears in your terminal. On your phone, open **Google Messages > Settings > Device pairing > Pair a device** and scan it. The session saves to `~/.local/share/openmessages/session.json`.
 
-### 3. Add to MCP config
+### 3. Start the server
+
+```bash
+./openmessages serve
+```
+
+This starts both:
+- **MCP server** on stdio (for Claude Code)
+- **Web UI** at [http://localhost:7007](http://localhost:7007)
+
+### 4. Connect to Claude Code
 
 Add to `~/.mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "gmessages": {
+    "openmessages": {
       "command": "/path/to/openmessages",
       "args": ["serve"]
     }
@@ -36,11 +52,19 @@ Add to `~/.mcp.json`:
 }
 ```
 
-### 4. Restart Claude Code
+Restart Claude Code. The 7 tools appear automatically.
 
-The 7 tools will appear automatically.
+## Features
 
-## Tools
+- **Read messages** — full conversation history, search, media
+- **Send messages** — SMS and RCS, including replies
+- **React to messages** — emoji reactions on any message
+- **Image/media display** — inline images with fullscreen viewer
+- **Web UI** — real-time conversation view at localhost:7007
+- **MCP tools** — 7 tools for Claude Code integration
+- **Local storage** — SQLite database, your data stays on your machine
+
+## MCP tools
 
 | Tool | Description |
 |------|-------------|
@@ -52,23 +76,42 @@ The 7 tools will appear automatically.
 | `list_contacts` | List/search contacts |
 | `get_status` | Connection status and paired phone info |
 
+## Web UI
+
+The web UI runs at `http://localhost:7007` when the server is started. It provides:
+
+- Conversation list with search
+- Message view with images, reactions, and reply threads
+- Compose and send messages
+- React to messages (right-click)
+- Reply to messages (double-click)
+
 ## Configuration
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
 | `OPENMESSAGES_DATA_DIR` | `~/.local/share/openmessages` | Data directory (DB + session) |
 | `OPENMESSAGES_LOG_LEVEL` | `info` | Log level (debug/info/warn/error/trace) |
+| `OPENMESSAGES_PORT` | `7007` | Web UI port |
 
 ## Architecture
 
 - **libgm** handles the Google Messages protocol (pairing, encryption, long-polling)
-- **SQLite** (WAL mode) stores messages, conversations, and contacts locally
+- **SQLite** (WAL mode, pure Go) stores messages, conversations, and contacts locally
 - Real-time events from the phone are written to SQLite as they arrive
+- Backfill fetches conversation history on startup
 - MCP tool handlers read from SQLite for queries, call libgm for sends
 - Auth tokens auto-refresh and persist to `session.json`
 
 ## Development
 
 ```bash
-go test ./...
+go test ./...        # Run all tests
+go build .           # Build binary
+./openmessages pair  # Pair with phone
+./openmessages serve # Start server
 ```
+
+## License
+
+MIT

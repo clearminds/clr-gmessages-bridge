@@ -442,6 +442,37 @@ func TestMessagesIncludeReactionsAndReplyTo(t *testing.T) {
 	}
 }
 
+func TestBuildReactionPayload(t *testing.T) {
+	sim := &gmproto.SIMPayload{SIMNumber: 1}
+
+	// ADD reaction
+	payload := BuildReactionPayload("msg-123", "😂", "add", sim)
+	if payload.MessageID != "msg-123" {
+		t.Errorf("MessageID = %q, want msg-123", payload.MessageID)
+	}
+	if payload.ReactionData == nil || payload.ReactionData.Unicode != "😂" {
+		t.Errorf("ReactionData.Unicode = %v, want 😂", payload.ReactionData)
+	}
+	if payload.Action != gmproto.SendReactionRequest_ADD {
+		t.Errorf("Action = %v, want ADD", payload.Action)
+	}
+	if payload.SIMPayload == nil || payload.SIMPayload.SIMNumber != 1 {
+		t.Error("SIMPayload not set correctly")
+	}
+
+	// REMOVE reaction
+	payload2 := BuildReactionPayload("msg-456", "👍", "remove", sim)
+	if payload2.Action != gmproto.SendReactionRequest_REMOVE {
+		t.Errorf("Action = %v, want REMOVE", payload2.Action)
+	}
+
+	// Default to ADD
+	payload3 := BuildReactionPayload("msg-789", "❤️", "", sim)
+	if payload3.Action != gmproto.SendReactionRequest_ADD {
+		t.Errorf("Action = %v, want ADD for empty action string", payload3.Action)
+	}
+}
+
 func TestSendReactionValidation(t *testing.T) {
 	ts := newTestServer(t)
 
@@ -461,7 +492,7 @@ func TestSendReactionValidation(t *testing.T) {
 func TestSendReactionNoClient(t *testing.T) {
 	ts := newTestServer(t)
 
-	body := `{"message_id": "m1", "emoji": "😂"}`
+	body := `{"message_id": "m1", "emoji": "😂", "conversation_id": "c1"}`
 	resp, err := http.Post(ts.server.URL+"/api/react", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)

@@ -957,11 +957,9 @@ html, body {
     autoResize();
 
     try {
-      const convo = conversations.find(c => c.ConversationID === activeConvoId);
       const payload = {
-        phone_number: convo?.Name || '',
-        message: text,
         conversation_id: activeConvoId,
+        message: text,
       };
       if (replyToMsg) {
         payload.reply_to_id = replyToMsg.MessageID;
@@ -1052,7 +1050,12 @@ html, body {
     // Close picker
     document.querySelectorAll('.react-picker.show').forEach(p => p.classList.remove('show'));
     try {
-      await postJSON('/api/react', { message_id: messageId, emoji: emoji });
+      await postJSON('/api/react', {
+        message_id: messageId,
+        emoji: emoji,
+        conversation_id: activeConvoId,
+        action: 'add',
+      });
       // Reload to see updated reactions
       if (activeConvoId) await loadMessages(activeConvoId);
     } catch (err) {
