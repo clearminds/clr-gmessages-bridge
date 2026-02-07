@@ -3,6 +3,12 @@ import WebKit
 
 struct ContentView: View {
     @ObservedObject var backend: BackendManager
+    @StateObject private var notifications: NotificationManager
+
+    init(backend: BackendManager) {
+        self._backend = ObservedObject(wrappedValue: backend)
+        self._notifications = StateObject(wrappedValue: NotificationManager(baseURL: backend.baseURL))
+    }
 
     var body: some View {
         ZStack {
@@ -20,6 +26,13 @@ struct ContentView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             backend.start()
+        }
+        .onChange(of: backend.state) { _, newState in
+            if newState == .running {
+                notifications.start()
+            } else {
+                notifications.stop()
+            }
         }
     }
 }
