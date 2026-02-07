@@ -166,16 +166,17 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-serif);
-  font-size: 18px;
-  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 600;
+  color: #ffffff;
   flex-shrink: 0;
-  border: 1px solid var(--border);
+  border: none;
+  letter-spacing: 0.5px;
 }
 
 .convo-item.active .convo-avatar {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--border-accent);
 }
 
 .convo-meta {
@@ -261,10 +262,12 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-serif);
-  font-size: 16px;
-  color: var(--accent);
-  border: 1px solid var(--border-accent);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+  border: none;
 }
 
 .chat-header-name {
@@ -327,6 +330,49 @@ html, body {
   border: 1px solid var(--border);
 }
 
+/* ─── Message Avatar (group chats) ─── */
+.msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 560px;
+  animation: msgIn 0.25s ease-out;
+}
+
+.msg-row.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.msg-row.received {
+  align-self: flex-start;
+}
+
+.msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.msg-avatar.avatar-hidden {
+  visibility: hidden;
+}
+
+.msg-row .msg {
+  align-self: auto;
+  animation: none;
+  min-width: 0;
+}
+
 .msg-sender {
   font-size: 12px;
   font-weight: 500;
@@ -375,6 +421,38 @@ html, body {
   font-size: 10px;
 }
 
+/* ─── Media (images & videos) ─── */
+.msg-media {
+  margin: 4px 0;
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 320px;
+}
+
+.msg.sent .msg-media { margin-left: auto; }
+
+.msg-media img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: block;
+  background: var(--bg-elevated);
+  min-height: 60px;
+  object-fit: cover;
+}
+
+.msg-media video {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-md);
+  display: block;
+  background: #000;
+  object-fit: cover;
+}
+
+/* Legacy class compat */
 .msg-image {
   max-width: 320px;
   max-height: 400px;
@@ -400,6 +478,33 @@ html, body {
   margin: 4px 0;
 }
 
+.msg-media-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 200px;
+  height: 120px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.msg-media-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .msg.sent .msg-image { margin-left: auto; }
 
 .msg-image-fullscreen {
@@ -418,6 +523,31 @@ html, body {
   max-height: 90vh;
   object-fit: contain;
   border-radius: var(--radius-md);
+}
+
+.msg-image-fullscreen video {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.msg-image-fullscreen .fullscreen-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.msg-image-fullscreen .fullscreen-close:hover {
+  opacity: 1;
 }
 
 /* ─── Reactions ─── */
@@ -543,29 +673,54 @@ html, body {
   background: var(--accent-dim);
 }
 
-/* ─── Reply Banner ─── */
-.msg-reply-banner {
+/* ─── Reply Preview (quoted message inside bubble) ─── */
+.msg-reply-preview {
   padding: 6px 10px;
-  margin-bottom: 4px;
-  border-left: 2px solid var(--accent);
-  border-radius: 2px;
-  background: var(--cream-soft);
-  font-size: 12px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--text-muted);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12.5px;
+  line-height: 1.4;
   color: var(--text-secondary);
   cursor: pointer;
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: background 0.15s;
 }
 
-.msg-reply-banner:hover {
-  background: var(--accent-dim);
+.msg-reply-preview:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.msg-reply-banner .reply-author {
+.msg.sent .msg-reply-preview {
+  border-left-color: var(--accent);
+  background: rgba(232, 164, 74, 0.08);
+}
+
+.msg.sent .msg-reply-preview:hover {
+  background: rgba(232, 164, 74, 0.14);
+}
+
+.msg-reply-preview .reply-author {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
   color: var(--accent);
-  font-weight: 500;
+  margin-bottom: 1px;
+}
+
+.msg.received .msg-reply-preview .reply-author {
+  color: var(--text-secondary);
+}
+
+.msg-reply-preview .reply-body {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 /* ─── Reply Compose Indicator ─── */
@@ -870,6 +1025,23 @@ html, body {
     background: rgba(220, 80, 60, 0.08);
     border-color: rgba(220, 80, 60, 0.2);
   }
+
+  /* Reply preview: use dark-based tints for light mode */
+  .msg-reply-preview {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .msg-reply-preview:hover {
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  .msg.sent .msg-reply-preview {
+    background: rgba(212, 146, 46, 0.1);
+  }
+
+  .msg.sent .msg-reply-preview:hover {
+    background: rgba(212, 146, 46, 0.16);
+  }
 }
 </style>
 </head>
@@ -970,6 +1142,33 @@ html, body {
 
   let replyToMsg = null; // {MessageID, SenderName, Body}
   const QUICK_EMOJIS = ['😂', '❤️', '👍', '😮', '😢', '🙏'];
+
+  // ─── Avatar Colors ───
+  // Pleasant, muted palette that works on both dark and light backgrounds
+  const AVATAR_COLORS = [
+    '#5B8DEF', // blue
+    '#43A692', // teal
+    '#E8895C', // coral
+    '#9B72CF', // purple
+    '#D4644E', // terracotta
+    '#5CAE6E', // green
+    '#CB7EB5', // mauve
+    '#6A9FD8', // sky
+    '#C4965A', // amber
+    '#7E8CC8', // periwinkle
+  ];
+
+  function avatarColor(name) {
+    if (!name) return AVATAR_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
+  // Track whether the active conversation is a group chat
+  let activeConvoIsGroup = false;
 
   // ─── Utilities ───
   function initials(name) {
@@ -1078,7 +1277,7 @@ html, body {
         ? escapeHtml(c._searchPreview.substring(0, 60))
         : '&nbsp;';
       el.innerHTML = `
-        <div class="convo-avatar">${initials(c.Name)}</div>
+        <div class="convo-avatar" style="background:${avatarColor(c.Name)}">${initials(c.Name)}</div>
         <div class="convo-meta">
           <div class="convo-name">${escapeHtml(c.Name || 'Unknown')}</div>
           <div class="convo-preview">${preview}</div>
@@ -1121,7 +1320,9 @@ html, body {
     $composeBar.style.display = 'flex';
 
     $chatHeaderAvatar.textContent = initials(convo.Name);
+    $chatHeaderAvatar.style.background = avatarColor(convo.Name);
     $chatHeaderName.textContent = convo.Name || 'Unknown';
+    activeConvoIsGroup = !!convo.IsGroup;
     // Set default header status before loading messages
     if (convo.IsGroup) {
       $chatHeaderStatus.textContent = 'Group chat';
@@ -1152,8 +1353,9 @@ html, body {
 
       $messagesArea.innerHTML = '';
       let lastDate = 0;
+      let lastSenderName = null; // Track consecutive messages from same sender
 
-      msgs.forEach(m => {
+      msgs.forEach((m, mi) => {
         // Date divider
         if (!isSameDay(m.TimestampMS, lastDate)) {
           const divider = document.createElement('div');
@@ -1188,23 +1390,37 @@ html, body {
           const original = msgs.find(om => om.MessageID === m.ReplyToID);
           const origName = original ? (original.SenderName || 'You') : '';
           const origBody = original ? (original.Body || 'Media') : 'Original message';
-          html += `<div class="msg-reply-banner" data-reply-id="${escapeHtml(m.ReplyToID)}" onclick="scrollToMessage('${escapeHtml(m.ReplyToID)}')"><span class="reply-author">${escapeHtml(origName)}</span> ${escapeHtml(origBody.substring(0, 80))}</div>`;
+          const truncBody = origBody.length > 60 ? origBody.substring(0, 60) + '\u2026' : origBody;
+          html += `<div class="msg-reply-preview" data-reply-id="${escapeHtml(m.ReplyToID)}" onclick="scrollToMessage('${escapeHtml(m.ReplyToID)}')"><span class="reply-author">${escapeHtml(origName)}</span><span class="reply-body">${escapeHtml(truncBody)}</span></div>`;
         }
 
         if (!m.IsFromMe && m.SenderName) {
-          html += `<div class="msg-sender">${escapeHtml(m.SenderName)}</div>`;
+          html += `<div class="msg-sender" style="color:${avatarColor(m.SenderName)}">${escapeHtml(m.SenderName)}</div>`;
         }
         if (m.MediaID) {
-          const isImage = (m.MimeType || '').startsWith('image/');
+          const mimeType = (m.MimeType || '').toLowerCase();
+          const isImage = mimeType.startsWith('image/');
+          const isVideo = mimeType.startsWith('video/');
+          const mediaSrc = `/api/media/${encodeURIComponent(m.MessageID)}`;
+          const safeId = CSS.escape(m.MessageID);
+
           if (isImage) {
-            html += `<div class="msg-image-loading" id="img-loading-${m.MessageID}">Loading image...</div>`;
-            html += `<img class="msg-image" src="/api/media/${encodeURIComponent(m.MessageID)}" alt="Image" style="display:none" onload="this.style.display='block';var ldr=document.getElementById('img-loading-${m.MessageID}');if(ldr)ldr.remove();" onerror="var ldr=document.getElementById('img-loading-${m.MessageID}');if(ldr)ldr.textContent='Failed to load'" onclick="showFullscreen(this.src)">`;
+            html += `<div class="msg-media">`;
+            html += `<div class="msg-media-loading" id="media-loading-${safeId}"><div class="spinner"></div>Loading image...</div>`;
+            html += `<img src="${mediaSrc}" alt="Image" style="display:none" onload="this.style.display='block';var ldr=document.getElementById('media-loading-${safeId}');if(ldr)ldr.remove();" onerror="var ldr=document.getElementById('media-loading-${safeId}');if(ldr){ldr.innerHTML='Failed to load image';ldr.querySelector('.spinner')&&ldr.querySelector('.spinner').remove();}" onclick="showFullscreen(this.src,'image')">`;
+            html += `</div>`;
+          } else if (isVideo) {
+            html += `<div class="msg-media">`;
+            html += `<div class="msg-media-loading" id="media-loading-${safeId}"><div class="spinner"></div>Loading video...</div>`;
+            html += `<video src="${mediaSrc}" preload="metadata" controls playsinline style="display:none" onloadeddata="this.style.display='block';var ldr=document.getElementById('media-loading-${safeId}');if(ldr)ldr.remove();" onerror="var ldr=document.getElementById('media-loading-${safeId}');if(ldr){ldr.innerHTML='Failed to load video';}" onclick="event.stopPropagation()"></video>`;
+            html += `</div>`;
           } else {
             html += `<div style="font-size:13px;color:var(--text-secondary);padding:6px 0">Attachment: ${escapeHtml(m.MimeType || 'file')}</div>`;
           }
         } else if (m.MimeType) {
           // Media metadata exists but media ID expired/unavailable
-          const icon = (m.MimeType || '').startsWith('image/') ? '🖼️' : '📎';
+          const mimeType = (m.MimeType || '').toLowerCase();
+          const icon = mimeType.startsWith('image/') ? '\uD83D\uDDBC\uFE0F' : mimeType.startsWith('video/') ? '\uD83C\uDFA5' : '\uD83D\uDCCE';
           html += `<div style="font-size:13px;color:var(--text-muted);padding:6px 0">${icon} ${escapeHtml(m.MimeType)} (media unavailable)</div>`;
         }
         if (m.Body) {
@@ -1260,7 +1476,26 @@ html, body {
           setReplyTo(m);
         });
 
-        $messagesArea.appendChild(el);
+        // In group chats, wrap received messages with an avatar
+        if (activeConvoIsGroup && !m.IsFromMe && m.SenderName) {
+          // Show avatar only for the last message in a consecutive run from the same sender
+          const nextMsg = msgs[mi + 1];
+          const isLastFromSender = !nextMsg || nextMsg.IsFromMe || nextMsg.SenderName !== m.SenderName ||
+            (nextMsg.Status || '').startsWith('TOMBSTONE_') || !isSameDay(m.TimestampMS, nextMsg.TimestampMS);
+
+          const row = document.createElement('div');
+          row.className = 'msg-row received';
+          const avatarDiv = document.createElement('div');
+          avatarDiv.className = 'msg-avatar' + (isLastFromSender ? '' : ' avatar-hidden');
+          avatarDiv.style.background = avatarColor(m.SenderName);
+          avatarDiv.textContent = initials(m.SenderName).charAt(0);
+          row.appendChild(avatarDiv);
+          row.appendChild(el);
+          $messagesArea.appendChild(row);
+        } else {
+          $messagesArea.appendChild(el);
+        }
+        lastSenderName = m.IsFromMe ? null : m.SenderName;
       });
 
       // Update protocol indicator in header from most recent tombstone
@@ -1501,12 +1736,25 @@ html, body {
     }
   };
 
-  // ─── Fullscreen Image Viewer ───
-  window.showFullscreen = function(src) {
+  // ─── Fullscreen Media Viewer ───
+  window.showFullscreen = function(src, type) {
     const overlay = document.createElement('div');
     overlay.className = 'msg-image-fullscreen';
-    overlay.innerHTML = `<img src="${src}" alt="Full size">`;
-    overlay.addEventListener('click', () => overlay.remove());
+
+    if (type === 'video') {
+      overlay.innerHTML = `<video src="${src}" controls autoplay playsinline></video><button class="fullscreen-close">&times;</button>`;
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target.classList.contains('fullscreen-close')) {
+          const vid = overlay.querySelector('video');
+          if (vid) vid.pause();
+          overlay.remove();
+        }
+      });
+    } else {
+      overlay.innerHTML = `<img src="${src}" alt="Full size"><button class="fullscreen-close">&times;</button>`;
+      overlay.addEventListener('click', () => overlay.remove());
+    }
+
     document.body.appendChild(overlay);
   };
 
@@ -1534,6 +1782,7 @@ html, body {
   // Helper: deselect current conversation and return to empty state
   function deselectConversation() {
     activeConvoId = null;
+    activeConvoIsGroup = false;
     clearInterval(pollTimer);
     document.querySelectorAll('.convo-item').forEach(el => el.classList.remove('active'));
     $emptyState.style.display = '';

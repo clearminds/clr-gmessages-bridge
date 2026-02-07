@@ -1,0 +1,248 @@
+package db
+
+import (
+	"fmt"
+	"testing"
+)
+
+func TestUpsertContact_InsertAndUpdate(t *testing.T) {
+	store := newTestStore(t)
+
+	t.Run("insert new contact", func(t *testing.T) {
+		contact := &Contact{
+			ContactID: "c1",
+			Name:      "Alice",
+			Number:    "+15551234567",
+		}
+		if err := store.UpsertContact(contact); err != nil {
+			t.Fatalf("upsert: %v", err)
+		}
+
+		contacts, err := store.ListContacts("Alice", 10)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(contacts) != 1 {
+			t.Fatalf("count: got %d, want 1", len(contacts))
+		}
+		if contacts[0].Name != "Alice" {
+			t.Errorf("name: got %q, want %q", contacts[0].Name, "Alice")
+		}
+		if contacts[0].Number != "+15551234567" {
+			t.Errorf("number: got %q, want %q", contacts[0].Number, "+15551234567")
+		}
+	})
+
+	t.Run("update existing contact", func(t *testing.T) {
+		contact := &Contact{
+			ContactID: "c1",
+			Name:      "Alice Smith",
+			Number:    "+15559999999",
+		}
+		if err := store.UpsertContact(contact); err != nil {
+			t.Fatalf("upsert update: %v", err)
+		}
+
+		contacts, err := store.ListContacts("Alice Smith", 10)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(contacts) != 1 {
+			t.Fatalf("count: got %d, want 1", len(contacts))
+		}
+		if contacts[0].Name != "Alice Smith" {
+			t.Errorf("name after update: got %q, want %q", contacts[0].Name, "Alice Smith")
+		}
+		if contacts[0].Number != "+15559999999" {
+			t.Errorf("number after update: got %q, want %q", contacts[0].Number, "+15559999999")
+		}
+	})
+
+	t.Run("upsert does not create duplicate", func(t *testing.T) {
+		contacts, err := store.ListContacts("", 100)
+		if err != nil {
+			t.Fatalf("list all: %v", err)
+		}
+		if len(contacts) != 1 {
+			t.Errorf("total contacts: got %d, want 1 (no duplicates)", len(contacts))
+		}
+	})
+}
+
+func TestListContacts_QueryFilter(t *testing.T) {
+	store := newTestStore(t)
+
+	contacts := []Contact{
+		{ContactID: "c1", Name: "Alice Johnson", Number: "+15551111111"},
+		{ContactID: "c2", Name: "Bob Smith", Number: "+15552222222"},
+		{ContactID: "c3", Name: "Charlie Brown", Number: "+15553333333"},
+		{ContactID: "c4", Name: "Alice Cooper", Number: "+15554444444"},
+		{ContactID: "c5", Name: "Dave", Number: "+15551111999"},
+	}
+	for i := range contacts {
+		if err := store.UpsertContact(&contacts[i]); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	t.Run("filter by name substring", func(t *testing.T) {
+		got, err := store.ListContacts("alice", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 2 {
+			t.Errorf("count: got %d, want 2", len(got))
+		}
+	})
+
+	t.Run("filter by phone number substring", func(t *testing.T) {
+		got, err := store.ListContacts("5551111", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		// Matches "+15551111111" and "+15551111999".
+		if len(got) != 2 {
+			t.Errorf("count: got %d, want 2", len(got))
+		}
+	})
+
+	t.Run("empty query returns all contacts", func(t *testing.T) {
+		got, err := store.ListContacts("", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 5 {
+			t.Errorf("count: got %d, want 5", len(got))
+		}
+	})
+
+	t.Run("no match returns empty", func(t *testing.T) {
+		got, err := store.ListContacts("zzzzz", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 0 {
+			t.Errorf("count: got %d, want 0", len(got))
+		}
+	})
+
+	t.Run("limit constrains results", func(t *testing.T) {
+		got, err := store.ListContacts("", 2)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 2 {
+			t.Errorf("count: got %d, want 2", len(got))
+		}
+	})
+
+	t.Run("results ordered by name", func(t *testing.T) {
+		got, err := store.ListContacts("", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		for i := 1; i < len(got); i++ {
+			if got[i].Name < got[i-1].Name {
+				t.Errorf("not sorted: %q < %q at index %d", got[i].Name, got[i-1].Name, i)
+			}
+		}
+	})
+}
+
+func TestListContacts_Empty(t *testing.T) {
+	store := newTestStore(t)
+
+	got, err := store.ListContacts("", 100)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("count: got %d, want 0", len(got))
+	}
+}
+
+func TestListContacts_SpecialCharacters(t *testing.T) {
+	store := newTestStore(t)
+
+	// Contacts with special characters in names.
+	contacts := []Contact{
+		{ContactID: "sp1", Name: "O'Brien", Number: "+15551111111"},
+		{ContactID: "sp2", Name: "Dr. Smith (MD)", Number: "+15552222222"},
+		{ContactID: "sp3", Name: "José García", Number: "+15553333333"},
+	}
+	for i := range contacts {
+		if err := store.UpsertContact(&contacts[i]); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	t.Run("apostrophe in name", func(t *testing.T) {
+		got, err := store.ListContacts("O'Brien", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 1 {
+			t.Errorf("count: got %d, want 1", len(got))
+		}
+	})
+
+	t.Run("parentheses in name", func(t *testing.T) {
+		got, err := store.ListContacts("(MD)", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 1 {
+			t.Errorf("count: got %d, want 1", len(got))
+		}
+	})
+
+	t.Run("unicode in name", func(t *testing.T) {
+		got, err := store.ListContacts("García", 100)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		if len(got) != 1 {
+			t.Errorf("count: got %d, want 1", len(got))
+		}
+	})
+}
+
+func TestUpsertContact_ManyContacts(t *testing.T) {
+	store := newTestStore(t)
+
+	for i := 0; i < 100; i++ {
+		err := store.UpsertContact(&Contact{
+			ContactID: fmt.Sprintf("c%d", i),
+			Name:      fmt.Sprintf("Contact %03d", i),
+			Number:    fmt.Sprintf("+1555%07d", i),
+		})
+		if err != nil {
+			t.Fatalf("upsert %d: %v", i, err)
+		}
+	}
+
+	got, err := store.ListContacts("", 1000)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(got) != 100 {
+		t.Errorf("count: got %d, want 100", len(got))
+	}
+}
+
+func TestListContacts_QueryMatchesBothNameAndNumber(t *testing.T) {
+	store := newTestStore(t)
+
+	store.UpsertContact(&Contact{ContactID: "c1", Name: "Alice 555", Number: "+15551234567"})
+	store.UpsertContact(&Contact{ContactID: "c2", Name: "Bob", Number: "+15559876543"})
+
+	// "555" should match both: Alice by name ("Alice 555") and Bob by number ("+15559876543").
+	// Also Alice by number (+15551234567).
+	got, err := store.ListContacts("555", 100)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("count: got %d, want 2 (matches both name and number)", len(got))
+	}
+}
