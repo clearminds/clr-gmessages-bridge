@@ -511,6 +511,15 @@ html, body {
   text-transform: uppercase;
 }
 
+.system-msg {
+  text-align: center;
+  padding: 8px 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  animation: msgIn 0.25s ease-out;
+}
+
 /* ─── Compose Bar ─── */
 .compose-bar {
   padding: 16px 28px 20px;
@@ -826,8 +835,12 @@ html, body {
 
     $chatHeaderAvatar.textContent = initials(convo.Name);
     $chatHeaderName.textContent = convo.Name || 'Unknown';
-    $chatHeaderStatus.textContent = convo.IsGroup ? 'Group' : 'SMS';
-
+    // Set default header status before loading messages
+    if (convo.IsGroup) {
+      $chatHeaderStatus.textContent = 'Group chat';
+    } else {
+      $chatHeaderStatus.textContent = '';
+    }
     lastMsgCount = -1; // Force re-render on conversation switch
     await loadMessages(convo.ConversationID);
 
@@ -861,6 +874,21 @@ html, body {
           divider.textContent = formatDateDivider(m.TimestampMS);
           $messagesArea.appendChild(divider);
           lastDate = m.TimestampMS;
+        }
+
+        // System/tombstone messages (protocol switches, chat creation)
+        if ((m.Status || '').startsWith('TOMBSTONE_')) {
+          const sysEl = document.createElement('div');
+          sysEl.className = 'system-msg';
+          let sysText = m.Body || '';
+          if (m.Status.includes('RCS')) {
+            sysText = '🔒 ' + sysText;
+          } else if (m.Status.includes('TEXT') || m.Status.includes('SMS')) {
+            sysText = '💬 ' + sysText;
+          }
+          sysEl.textContent = sysText;
+          $messagesArea.appendChild(sysEl);
+          return;
         }
 
         const el = document.createElement('div');
@@ -942,6 +970,17 @@ html, body {
 
         $messagesArea.appendChild(el);
       });
+
+      // Update protocol indicator in header from most recent tombstone
+      // msgs are in chronological order (oldest first), so findLast gets the latest
+      const lastTombstone = msgs.findLast(m => (m.Status || '').startsWith('TOMBSTONE_'));
+      if (lastTombstone) {
+        if (lastTombstone.Status.includes('RCS')) {
+          $chatHeaderStatus.innerHTML = '<span style="color:#4a9;">🔒 RCS</span>';
+        } else if (lastTombstone.Status.includes('TEXT') || lastTombstone.Status.includes('SMS')) {
+          $chatHeaderStatus.innerHTML = '<span style="color:var(--text-muted)">SMS</span>';
+        }
+      }
 
       if (wasAtBottom || msgs.length !== lastMsgCount) {
         $messagesArea.scrollTop = $messagesArea.scrollHeight;
