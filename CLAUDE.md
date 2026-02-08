@@ -16,17 +16,23 @@ Open-source Google Messages client for macOS with built-in MCP server.
 
 ## Vercel deployment (openmessage.ai)
 
-**Config lives at root `vercel.json`**, not `site/vercel.json`. The root config sets `outputDirectory: "site"` and `cleanUrls: true`.
+**CRITICAL: Always deploy from the repo root**, not from `~` or any other directory. The `.vercel/project.json` links to the correct project/scope.
 
-After pushing changes to `site/`:
+**Config lives at root `vercel.json`**, not `site/vercel.json`. The root config sets `outputDirectory: "site"` and `cleanUrls: true`. A `.vercelignore` excludes Go/Swift build artifacts.
+
+**Scope: `max-ghenis-projects`** (personal account, NOT PolicyEngine).
+
+Deploy:
 ```bash
-cd /Users/maxghenis/openmessage && vercel --prod
+cd /Users/maxghenis/openmessages && vercel --prod
 ```
 
 **Always verify after deploy:**
 ```bash
 curl -s -o /dev/null -w "%{http_code}" https://openmessage.ai
 ```
+
+**Domains:** `openmessage.ai` (primary) and `openmessages.ai` (alias), both on Cloudflare DNS → 76.76.21.21.
 
 ## Building the macOS app
 
