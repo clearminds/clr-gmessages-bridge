@@ -23,17 +23,21 @@ func RunServe(logger zerolog.Logger) error {
 	}
 	defer a.Close()
 
-	// Connect to Google Messages
-	if err := a.LoadAndConnect(); err != nil {
-		return fmt.Errorf("connect: %w", err)
-	}
-
-	// Backfill existing conversations and messages
-	go func() {
-		if err := a.Backfill(); err != nil {
-			logger.Warn().Err(err).Msg("Backfill failed")
+	// Connect to Google Messages (skip in demo mode)
+	if os.Getenv("OPENMESSAGES_DEMO") == "" {
+		if err := a.LoadAndConnect(); err != nil {
+			return fmt.Errorf("connect: %w", err)
 		}
-	}()
+
+		// Backfill existing conversations and messages
+		go func() {
+			if err := a.Backfill(); err != nil {
+				logger.Warn().Err(err).Msg("Backfill failed")
+			}
+		}()
+	} else {
+		logger.Info().Msg("Demo mode — skipping phone connection")
+	}
 
 	// Start web server
 	port := os.Getenv("OPENMESSAGES_PORT")
