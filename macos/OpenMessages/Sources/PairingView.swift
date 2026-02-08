@@ -24,6 +24,11 @@ struct PairingView: View {
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
 
+            Text("No QR option? Switch from Google account pairing to QR code pairing in Device pairing settings.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+
             if let qrURL, let image = generateQRCode(from: qrURL) {
                 Image(nsImage: image)
                     .interpolation(.none)
