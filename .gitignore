@@ -6,3 +6,4 @@ macos/build/
 macos/OpenMessages/.build/
 .vercel
 .env*.local
+.build/

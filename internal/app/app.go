@@ -7,8 +7,8 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/internal/client"
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/client"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 type App struct {
@@ -25,7 +25,7 @@ func DefaultDataDir() string {
 		return dir
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".local", "share", "openmessages")
+	return filepath.Join(home, ".local", "share", "openmessage")
 }
 
 func New(logger zerolog.Logger) (*App, error) {

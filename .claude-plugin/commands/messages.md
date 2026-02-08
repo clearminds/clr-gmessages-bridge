@@ -5,11 +5,11 @@ user_invocable: true
 
 # Messages
 
-Use the OpenMessages MCP tools to help the user with their SMS/RCS messages.
+Use the OpenMessage MCP tools to help the user with their SMS/RCS messages.
 
 ## Available MCP tools
 
-All tools are prefixed with `mcp__openmessages__`:
+All tools are prefixed with `mcp__openmessage__`:
 
 - `list_conversations` - List recent conversations (params: `limit`)
 - `get_messages` - Get messages from a conversation (params: `conversation_id`, `limit`)

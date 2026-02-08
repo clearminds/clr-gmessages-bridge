@@ -27,7 +27,7 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Quit OpenMessages") {
+            Button("Quit OpenMessage") {
                 backend.stop()
                 NSApp.terminate(nil)
             }

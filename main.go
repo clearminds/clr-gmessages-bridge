@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/cmd"
+	"github.com/maxghenis/openmessage/cmd"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 		With().Timestamp().Logger().Level(level)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: openmessages <pair|serve|send>")
+		fmt.Fprintln(os.Stderr, "Usage: openmessage <pair|serve|send>")
 		fmt.Fprintln(os.Stderr, "  pair                          - Pair with your phone via QR code")
 		fmt.Fprintln(os.Stderr, "  serve                         - Start MCP server (stdio)")
 		fmt.Fprintln(os.Stderr, "  send <conversation_id> <msg>  - Send message to a conversation")
@@ -30,19 +30,19 @@ func main() {
 		err = cmd.RunServe(logger)
 	case "send":
 		if len(os.Args) < 4 {
-			fmt.Fprintln(os.Stderr, "Usage: openmessages send <conversation_id> <message>")
+			fmt.Fprintln(os.Stderr, "Usage: openmessage send <conversation_id> <message>")
 			os.Exit(1)
 		}
 		err = cmd.RunSend(logger, os.Args[2], os.Args[3])
 	case "debug-media":
 		if len(os.Args) < 3 {
-			fmt.Fprintln(os.Stderr, "Usage: openmessages debug-media <conversation_id>")
+			fmt.Fprintln(os.Stderr, "Usage: openmessage debug-media <conversation_id>")
 			os.Exit(1)
 		}
 		err = cmd.RunDebugMedia(logger, os.Args[2])
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
-		fmt.Fprintln(os.Stderr, "Usage: openmessages <pair|serve|send>")
+		fmt.Fprintln(os.Stderr, "Usage: openmessage <pair|serve|send>")
 		os.Exit(1)
 	}
 

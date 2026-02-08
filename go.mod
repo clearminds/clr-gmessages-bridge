@@ -1,4 +1,4 @@
-module github.com/maxghenis/openmessages
+module github.com/maxghenis/openmessage
 
 go 1.24.0
 

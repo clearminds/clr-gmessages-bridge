@@ -11,9 +11,9 @@ import (
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/internal/app"
-	"github.com/maxghenis/openmessages/internal/tools"
-	"github.com/maxghenis/openmessages/internal/web"
+	"github.com/maxghenis/openmessage/internal/app"
+	"github.com/maxghenis/openmessage/internal/tools"
+	"github.com/maxghenis/openmessage/internal/web"
 )
 
 func RunServe(logger zerolog.Logger) error {
@@ -43,7 +43,7 @@ func RunServe(logger zerolog.Logger) error {
 
 	// Create MCP server
 	mcpSrv := mcpserver.NewMCPServer(
-		"openmessages",
+		"openmessage",
 		"0.1.0",
 		mcpserver.WithToolCapabilities(true),
 	)

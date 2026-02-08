@@ -9,8 +9,8 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/internal/app"
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/app"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 func testApp(t *testing.T) *app.App {

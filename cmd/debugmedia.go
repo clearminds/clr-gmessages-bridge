@@ -6,8 +6,8 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/internal/app"
-	"github.com/maxghenis/openmessages/internal/client"
+	"github.com/maxghenis/openmessage/internal/app"
+	"github.com/maxghenis/openmessage/internal/client"
 )
 
 func RunDebugMedia(logger zerolog.Logger, convID string) error {

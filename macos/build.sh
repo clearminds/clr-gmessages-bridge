@@ -4,10 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_DIR="$SCRIPT_DIR/build"
-APP_NAME="OpenMessages"
+APP_NAME="OpenMessage"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 DMG_PATH="$BUILD_DIR/$APP_NAME.dmg"
-ENTITLEMENTS="$SCRIPT_DIR/OpenMessages.entitlements"
+ENTITLEMENTS="$SCRIPT_DIR/OpenMessage.entitlements"
 
 # ── Notarization config ──
 # Set these env vars to enable code signing + notarization:
@@ -19,15 +19,15 @@ SIGN_IDENTITY="${DEVELOPER_ID:-}"
 
 echo "==> Building Go backend..."
 cd "$ROOT_DIR"
-CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$SCRIPT_DIR/build/openmessages-arm64" .
-CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$SCRIPT_DIR/build/openmessages-amd64" .
-lipo -create -output "$SCRIPT_DIR/build/openmessages" \
-    "$SCRIPT_DIR/build/openmessages-arm64" \
-    "$SCRIPT_DIR/build/openmessages-amd64"
-echo "   Universal binary: $(du -h "$SCRIPT_DIR/build/openmessages" | cut -f1)"
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$SCRIPT_DIR/build/openmessage-arm64" .
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$SCRIPT_DIR/build/openmessage-amd64" .
+lipo -create -output "$SCRIPT_DIR/build/openmessage" \
+    "$SCRIPT_DIR/build/openmessage-arm64" \
+    "$SCRIPT_DIR/build/openmessage-amd64"
+echo "   Universal binary: $(du -h "$SCRIPT_DIR/build/openmessage" | cut -f1)"
 
 echo "==> Building Swift app..."
-cd "$SCRIPT_DIR/OpenMessages"
+cd "$SCRIPT_DIR/OpenMessage"
 swift build -c release --arch arm64 --arch x86_64 2>&1 | tail -5
 
 # Find the built executable
@@ -48,14 +48,14 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 cp "$SWIFT_BIN" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 # Copy Go backend binary into Resources
-cp "$SCRIPT_DIR/build/openmessages" "$APP_BUNDLE/Contents/Resources/openmessages"
-chmod +x "$APP_BUNDLE/Contents/Resources/openmessages"
+cp "$SCRIPT_DIR/build/openmessage" "$APP_BUNDLE/Contents/Resources/openmessage"
+chmod +x "$APP_BUNDLE/Contents/Resources/openmessage"
 
 # Copy Info.plist
-cp "$SCRIPT_DIR/OpenMessages/Sources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
+cp "$SCRIPT_DIR/OpenMessage/Sources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 
 # Generate and copy app icon
-ICON_SRC="$SCRIPT_DIR/OpenMessages/Sources/Assets.xcassets/AppIcon.appiconset"
+ICON_SRC="$SCRIPT_DIR/OpenMessage/Sources/Assets.xcassets/AppIcon.appiconset"
 if [ -f "$ICON_SRC/icon_512x512.png" ]; then
     ICONSET="$BUILD_DIR/AppIcon.iconset"
     rm -rf "$ICONSET"
@@ -86,7 +86,7 @@ if [ -n "$SIGN_IDENTITY" ]; then
     codesign --force --options runtime \
         --entitlements "$ENTITLEMENTS" \
         --sign "$SIGN_IDENTITY" \
-        "$APP_BUNDLE/Contents/Resources/openmessages"
+        "$APP_BUNDLE/Contents/Resources/openmessage"
     # Sign the main app
     codesign --force --options runtime \
         --entitlements "$ENTITLEMENTS" \
@@ -110,7 +110,7 @@ hdiutil create -volname "$APP_NAME" -srcfolder "$APP_BUNDLE" -ov -format UDZO "$
 echo "   DMG: $(du -h "$DMG_PATH" | cut -f1)"
 
 # ── Notarize ──
-NOTARY_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-OpenMessages}"
+NOTARY_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-OpenMessage}"
 if [ -n "$SIGN_IDENTITY" ]; then
     echo "==> Submitting for notarization..."
     xcrun notarytool submit "$DMG_PATH" \

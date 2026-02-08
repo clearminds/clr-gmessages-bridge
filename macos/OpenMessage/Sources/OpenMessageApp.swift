@@ -1,18 +1,18 @@
 import SwiftUI
 
 @main
-struct OpenMessagesApp: App {
+struct OpenMessageApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var backend = BackendManager()
 
     var body: some Scene {
-        Window("OpenMessages", id: "main") {
+        Window("OpenMessage", id: "main") {
             ContentView(backend: backend)
                 .frame(minWidth: 800, minHeight: 500)
         }
         .defaultSize(width: 1100, height: 700)
 
-        MenuBarExtra("OpenMessages", systemImage: "message.fill") {
+        MenuBarExtra("OpenMessage", systemImage: "message.fill") {
             MenuBarView(backend: backend)
         }
     }

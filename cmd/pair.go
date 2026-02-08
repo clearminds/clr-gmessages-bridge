@@ -14,8 +14,8 @@ import (
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/events"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/app"
-	"github.com/maxghenis/openmessages/internal/client"
+	"github.com/maxghenis/openmessage/internal/app"
+	"github.com/maxghenis/openmessage/internal/client"
 )
 
 const maxQRRefreshes = 5
@@ -51,7 +51,7 @@ func RunPair(logger zerolog.Logger) error {
 			return
 		}
 		fmt.Println("\nSession saved to", sessionPath)
-		fmt.Println("You can now run: openmessages serve")
+		fmt.Println("You can now run: openmessage serve")
 	}
 	cli.GM.PairCallback.Store(&pairCB)
 

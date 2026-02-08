@@ -7,8 +7,8 @@ import (
 
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/client"
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/client"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 // Backfill fetches existing conversations and recent messages from

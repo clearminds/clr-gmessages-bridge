@@ -1,4 +1,4 @@
-# OpenMessages
+# OpenMessage
 
 An open-source Google Messages client with MCP support. Read and send SMS/RCS from Claude Code, a web UI, or any MCP-compatible tool.
 
@@ -14,23 +14,23 @@ Built on [mautrix/gmessages](https://github.com/mautrix/gmessages) (libgm) for t
 ### 1. Clone and build
 
 ```bash
-git clone https://github.com/MaxGhenis/openmessages.git
-cd openmessages
-go build -o openmessages .
+git clone https://github.com/MaxGhenis/openmessage.git
+cd openmessage
+go build -o openmessage .
 ```
 
 ### 2. Pair with your phone
 
 ```bash
-./openmessages pair
+./openmessage pair
 ```
 
-A QR code appears in your terminal. On your phone, open **Google Messages > Settings > Device pairing > Pair a device** and scan it. The session saves to `~/.local/share/openmessages/session.json`.
+A QR code appears in your terminal. On your phone, open **Google Messages > Settings > Device pairing > Pair a device** and scan it. The session saves to `~/.local/share/openmessage/session.json`.
 
 ### 3. Start the server
 
 ```bash
-./openmessages serve
+./openmessage serve
 ```
 
 This starts both:
@@ -44,8 +44,8 @@ Add to `~/.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "openmessages": {
-      "command": "/path/to/openmessages",
+    "openmessage": {
+      "command": "/path/to/openmessage",
       "args": ["serve"]
     }
   }
@@ -90,7 +90,7 @@ The web UI runs at `http://localhost:7007` when the server is started. It provid
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
-| `OPENMESSAGES_DATA_DIR` | `~/.local/share/openmessages` | Data directory (DB + session) |
+| `OPENMESSAGES_DATA_DIR` | `~/.local/share/openmessage` | Data directory (DB + session) |
 | `OPENMESSAGES_LOG_LEVEL` | `info` | Log level (debug/info/warn/error/trace) |
 | `OPENMESSAGES_PORT` | `7007` | Web UI port |
 
@@ -108,8 +108,8 @@ The web UI runs at `http://localhost:7007` when the server is started. It provid
 ```bash
 go test ./...        # Run all tests
 go build .           # Build binary
-./openmessages pair  # Pair with phone
-./openmessages serve # Start server
+./openmessage pair  # Pair with phone
+./openmessage serve # Start server
 ```
 
 ## License

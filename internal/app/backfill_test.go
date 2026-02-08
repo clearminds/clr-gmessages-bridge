@@ -5,7 +5,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 func TestBackfillStoresConversationsAndMessages(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 type testServer struct {

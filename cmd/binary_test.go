@@ -16,7 +16,7 @@ import (
 func TestBuiltBinaryAcceptsPairCommand(t *testing.T) {
 	// Build the binary
 	tmpDir := t.TempDir()
-	binary := filepath.Join(tmpDir, "openmessages")
+	binary := filepath.Join(tmpDir, "openmessage")
 	build := exec.Command("go", "build", "-o", binary, "..")
 	build.Dir = filepath.Join(".")
 	if out, err := build.CombinedOutput(); err != nil {

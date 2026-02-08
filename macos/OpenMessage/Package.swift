@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "OpenMessages",
+    name: "OpenMessage",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "OpenMessages",
+            name: "OpenMessage",
             path: "Sources",
             exclude: ["Info.plist"],
             resources: [

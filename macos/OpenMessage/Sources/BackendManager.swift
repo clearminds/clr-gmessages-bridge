@@ -17,38 +17,38 @@ final class BackendManager: ObservableObject {
     @Published var port: Int = 7007
 
     private var process: Process?
-    private let logger = Logger(subsystem: "com.openmessages.app", category: "Backend")
+    private let logger = Logger(subsystem: "com.openmessage.app", category: "Backend")
     private var healthCheckTask: Task<Void, Never>?
 
     /// Path to the embedded Go binary inside the app bundle.
     var binaryPath: String {
         if let bundlePath = Bundle.main.resourcePath {
-            let embedded = (bundlePath as NSString).appendingPathComponent("openmessages")
+            let embedded = (bundlePath as NSString).appendingPathComponent("openmessage")
             if FileManager.default.fileExists(atPath: embedded) {
                 return embedded
             }
         }
         // Fallback: look next to the app or in a known dev location
-        let devPath = FileManager.default.currentDirectoryPath + "/openmessages"
+        let devPath = FileManager.default.currentDirectoryPath + "/openmessage"
         if FileManager.default.fileExists(atPath: devPath) {
             return devPath
         }
         // Last resort: search PATH
-        return "/usr/local/bin/openmessages"
+        return "/usr/local/bin/openmessage"
     }
 
     /// Data directory for session, DB, etc.
     /// Uses Application Support inside the sandbox container, which is always writable.
     var dataDir: String {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = appSupport.appendingPathComponent("OpenMessages").path
+        let dir = appSupport.appendingPathComponent("OpenMessage").path
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
         return dir
     }
 
-    /// Migrate session and DB from old data dir (~/.local/share/openmessages) if present.
+    /// Migrate session and DB from old data dir (~/.local/share/openmessage) if present.
     private func migrateOldDataIfNeeded() {
-        let oldDir = NSHomeDirectory() + "/.local/share/openmessages"
+        let oldDir = NSHomeDirectory() + "/.local/share/openmessage"
         let newDir = dataDir
         let fm = FileManager.default
         guard fm.fileExists(atPath: oldDir + "/session.json"),

@@ -16,8 +16,8 @@ import (
 	"github.com/rs/zerolog"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/client"
-	"github.com/maxghenis/openmessages/internal/db"
+	"github.com/maxghenis/openmessage/internal/client"
+	"github.com/maxghenis/openmessage/internal/db"
 )
 
 //go:embed static/*

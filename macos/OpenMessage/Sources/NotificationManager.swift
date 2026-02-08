@@ -5,7 +5,7 @@ import os
 /// Polls the backend for new messages and sends native macOS notifications.
 @MainActor
 final class NotificationManager: ObservableObject {
-    private let logger = Logger(subsystem: "com.openmessages.app", category: "Notifications")
+    private let logger = Logger(subsystem: "com.openmessage.app", category: "Notifications")
     private var pollTask: Task<Void, Never>?
     private var lastSeenTimestamps: [String: Int64] = [:] // conversationID → latest timestamp
     private var baseURL: URL

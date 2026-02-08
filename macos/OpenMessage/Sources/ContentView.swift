@@ -46,7 +46,7 @@ struct LaunchView: View {
         VStack(spacing: 20) {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("Starting OpenMessages...")
+            Text("Starting OpenMessage...")
                 .font(.title3)
                 .foregroundStyle(.secondary)
         }

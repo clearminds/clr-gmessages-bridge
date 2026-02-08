@@ -9,7 +9,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/app"
+	"github.com/maxghenis/openmessage/internal/app"
 )
 
 func sendMessageTool() mcp.Tool {

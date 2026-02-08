@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
-	"github.com/maxghenis/openmessages/internal/app"
+	"github.com/maxghenis/openmessage/internal/app"
 )
 
 func RunSend(logger zerolog.Logger, conversationID, message string) error {
