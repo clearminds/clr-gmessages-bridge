@@ -36,10 +36,28 @@ func New(logger zerolog.Logger) (*App, error) {
 		return nil, fmt.Errorf("create data dir: %w", err)
 	}
 
+	// In demo mode, use a temp DB so we never touch real data
 	dbPath := filepath.Join(dataDir, "messages.db")
+	if os.Getenv("OPENMESSAGES_DEMO") != "" {
+		tmpDir, err := os.MkdirTemp("", "openmessage-demo-*")
+		if err != nil {
+			return nil, fmt.Errorf("create temp dir: %w", err)
+		}
+		dbPath = filepath.Join(tmpDir, "demo.db")
+	}
+
 	store, err := db.New(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
+	}
+
+	// Seed demo data
+	if os.Getenv("OPENMESSAGES_DEMO") != "" {
+		if err := store.SeedDemo(); err != nil {
+			store.Close()
+			return nil, fmt.Errorf("seed demo data: %w", err)
+		}
+		logger.Info().Str("db", dbPath).Msg("Demo mode — seeded fake data")
 	}
 
 	sessionPath := filepath.Join(dataDir, "session.json")
