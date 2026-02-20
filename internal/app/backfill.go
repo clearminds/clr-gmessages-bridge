@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
 
@@ -180,14 +181,30 @@ func (a *App) storeConversation(conv *gmproto.Conversation) error {
 		unread = 1
 	}
 
-	return a.Store.UpsertConversation(&db.Conversation{
+	if err := a.Store.UpsertConversation(&db.Conversation{
 		ConversationID: conv.GetConversationID(),
 		Name:           conv.GetName(),
 		IsGroup:        conv.GetIsGroupChat(),
 		Participants:   participantsJSON,
 		LastMessageTS:  conv.GetLastMessageTimestamp() / 1000,
 		UnreadCount:    unread,
-	})
+	}); err != nil {
+		return err
+	}
+
+	if a.Supabase != nil {
+		ts := time.UnixMilli(conv.GetLastMessageTimestamp() / 1000)
+		go func() {
+			if err := a.Supabase.UpsertConversation(
+				conv.GetConversationID(), conv.GetName(),
+				ts, conv.GetIsGroupChat(), "",
+			); err != nil {
+				a.Logger.Warn().Err(err).Msg("Supabase backfill conversation sync failed")
+			}
+		}()
+	}
+
+	return nil
 }
 
 func (a *App) storeMessage(msg *gmproto.Message) {
@@ -225,5 +242,20 @@ func (a *App) storeMessage(msg *gmproto.Message) {
 
 	if err := a.Store.UpsertMessage(dbMsg); err != nil {
 		a.Logger.Error().Err(err).Str("msg_id", dbMsg.MessageID).Msg("Failed to store backfill message")
+		return
+	}
+
+	if a.Supabase != nil {
+		ts := time.UnixMilli(dbMsg.TimestampMS)
+		go func() {
+			if err := a.Supabase.UpsertMessage(
+				dbMsg.MessageID, dbMsg.ConversationID,
+				dbMsg.SenderName, dbMsg.SenderNumber,
+				dbMsg.Body, ts, dbMsg.IsFromMe,
+				dbMsg.MimeType, "",
+			); err != nil {
+				a.Logger.Warn().Err(err).Msg("Supabase backfill message sync failed")
+			}
+		}()
 	}
 }

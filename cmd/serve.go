@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/http"
@@ -59,9 +60,36 @@ func RunServe(logger zerolog.Logger) error {
 		mcpserver.WithStaticBasePath("/mcp"),
 	)
 
+	var mediaUploader web.MediaUploader
+	if a.Supabase != nil {
+		mediaUploader = func(messageID string) (string, error) {
+			msg, err := a.Store.GetMessageByID(messageID)
+			if err != nil {
+				return "", fmt.Errorf("get message: %w", err)
+			}
+			if msg == nil || msg.MediaID == "" {
+				return "", fmt.Errorf("no media for message %s", messageID)
+			}
+			key, err := hex.DecodeString(msg.DecryptionKey)
+			if err != nil {
+				return "", fmt.Errorf("decode key: %w", err)
+			}
+			data, err := a.Client.GM.DownloadMedia(msg.MediaID, key)
+			if err != nil {
+				return "", fmt.Errorf("download: %w", err)
+			}
+			path := fmt.Sprintf("%s/%s", msg.ConversationID, messageID)
+			if ext := mimeToExt(msg.MimeType); ext != "" {
+				path += ext
+			}
+			return a.Supabase.UploadMedia(path, data, msg.MimeType)
+		}
+	}
+
 	httpHandler := web.APIHandlerFull(a.Store, a.Client, logger, sseSrv,
 		func() bool { return a.Connected.Load() },
 		a.Unpair,
+		mediaUploader,
 		a.DeepBackfill,
 	)
 	ln, err := net.Listen("tcp", ":"+port)
@@ -82,6 +110,27 @@ func RunServe(logger zerolog.Logger) error {
 	<-sigCh
 	logger.Info().Msg("Shutting down")
 	return nil
+}
+
+func mimeToExt(mime string) string {
+	switch mime {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	case "video/mp4":
+		return ".mp4"
+	case "audio/ogg":
+		return ".ogg"
+	case "audio/mpeg":
+		return ".mp3"
+	default:
+		return ""
+	}
 }
 
 // LogLevel returns the zerolog level based on OPENMESSAGES_LOG_LEVEL env var.

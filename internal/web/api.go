@@ -33,11 +33,15 @@ type StatusChecker func() bool
 // UnpairFunc deletes the session and disconnects.
 type UnpairFunc func() error
 
+// MediaUploader downloads media from a message and uploads to cloud storage.
+// Returns the public URL. If nil, download endpoint is not available.
+type MediaUploader func(messageID string) (string, error)
+
 func APIHandler(store *db.Store, cli *client.Client, logger zerolog.Logger, mcpHandler http.Handler, onDeepBackfill ...func()) http.Handler {
-	return APIHandlerFull(store, cli, logger, mcpHandler, nil, nil, onDeepBackfill...)
+	return APIHandlerFull(store, cli, logger, mcpHandler, nil, nil, nil, onDeepBackfill...)
 }
 
-func APIHandlerFull(store *db.Store, cli *client.Client, logger zerolog.Logger, mcpHandler http.Handler, isConnected StatusChecker, unpair UnpairFunc, onDeepBackfill ...func()) http.Handler {
+func APIHandlerFull(store *db.Store, cli *client.Client, logger zerolog.Logger, mcpHandler http.Handler, isConnected StatusChecker, unpair UnpairFunc, mediaUploader MediaUploader, onDeepBackfill ...func()) http.Handler {
 	mux := http.NewServeMux()
 
 	_ = mcpHandler // used in the return wrapper below
@@ -578,6 +582,35 @@ func APIHandlerFull(store *db.Store, cli *client.Client, logger zerolog.Logger, 
 			return
 		}
 		writeJSON(w, map[string]string{"status": "ok"})
+	})
+
+	mux.HandleFunc("/api/download", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httpError(w, "method not allowed", 405)
+			return
+		}
+		if mediaUploader == nil {
+			httpError(w, "media download not available (Supabase not configured)", 501)
+			return
+		}
+		var req struct {
+			MessageID      string `json:"message_id"`
+			ConversationID string `json:"conversation_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			httpError(w, "invalid JSON: "+err.Error(), 400)
+			return
+		}
+		if req.MessageID == "" {
+			httpError(w, "message_id is required", 400)
+			return
+		}
+		url, err := mediaUploader(req.MessageID)
+		if err != nil {
+			httpError(w, "download media: "+err.Error(), 502)
+			return
+		}
+		writeJSON(w, map[string]string{"url": url})
 	})
 
 	mux.HandleFunc("/api/backfill", func(w http.ResponseWriter, r *http.Request) {

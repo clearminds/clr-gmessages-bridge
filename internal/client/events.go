@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"go.mau.fi/mautrix-gmessages/pkg/libgm"
@@ -16,8 +17,16 @@ import (
 // OnDisconnect is called when the client fatally disconnects (e.g. unpaired).
 type OnDisconnect func()
 
+// SupabaseSync is an optional writer that syncs data to Supabase.
+type SupabaseSync interface {
+	UpsertConversation(convID, name string, lastMessageTime time.Time, isGroup bool, lastPreview string) error
+	UpsertMessage(id, conversationID, senderName, senderNumber, content string, timestamp time.Time, isFromMe bool, mediaType, mediaURL string) error
+	UpsertContact(number, name string) error
+}
+
 type EventHandler struct {
 	Store        *db.Store
+	Supabase     SupabaseSync
 	Logger       zerolog.Logger
 	SessionPath  string
 	Client       *Client
@@ -104,6 +113,20 @@ func (h *EventHandler) handleMessage(evt *libgm.WrappedMessage) {
 		return
 	}
 
+	if h.Supabase != nil {
+		ts := time.UnixMilli(dbMsg.TimestampMS)
+		go func() {
+			if err := h.Supabase.UpsertMessage(
+				dbMsg.MessageID, dbMsg.ConversationID,
+				dbMsg.SenderName, dbMsg.SenderNumber,
+				dbMsg.Body, ts, dbMsg.IsFromMe,
+				dbMsg.MimeType, "",
+			); err != nil {
+				h.Logger.Warn().Err(err).Msg("Supabase message sync failed")
+			}
+		}()
+	}
+
 	// When our sent message echoes back with a real server ID, clean up the
 	// tmp_ placeholder we stored at send time to avoid duplicates in the UI.
 	if dbMsg.IsFromMe && !strings.HasPrefix(dbMsg.MessageID, "tmp_") {
@@ -164,6 +187,32 @@ func (h *EventHandler) handleConversation(conv *gmproto.Conversation) {
 		h.Logger.Error().Err(err).Str("conv_id", dbConv.ConversationID).Msg("Failed to store conversation")
 		return
 	}
+
+	if h.Supabase != nil {
+		ts := time.UnixMilli(dbConv.LastMessageTS)
+		go func() {
+			if err := h.Supabase.UpsertConversation(
+				dbConv.ConversationID, dbConv.Name,
+				ts, dbConv.IsGroup, "",
+			); err != nil {
+				h.Logger.Warn().Err(err).Msg("Supabase conversation sync failed")
+			}
+			// Sync participant contacts
+			var participants []struct {
+				Name   string `json:"name"`
+				Number string `json:"number"`
+				IsMe   bool   `json:"is_me,omitempty"`
+			}
+			if err := json.Unmarshal([]byte(participantsJSON), &participants); err == nil {
+				for _, p := range participants {
+					if p.Number != "" && !p.IsMe {
+						h.Supabase.UpsertContact(p.Number, p.Name)
+					}
+				}
+			}
+		}()
+	}
+
 	h.Logger.Debug().Str("conv_id", dbConv.ConversationID).Str("name", dbConv.Name).Msg("Stored conversation")
 }
 

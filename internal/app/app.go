@@ -10,11 +10,13 @@ import (
 
 	"github.com/maxghenis/openmessage/internal/client"
 	"github.com/maxghenis/openmessage/internal/db"
+	"github.com/maxghenis/openmessage/internal/supabase"
 )
 
 type App struct {
 	Client       *client.Client
 	Store        *db.Store
+	Supabase     *supabase.Writer
 	EventHandler *client.EventHandler
 	Logger       zerolog.Logger
 	DataDir      string
@@ -60,10 +62,17 @@ func New(logger zerolog.Logger) (*App, error) {
 		logger.Info().Str("db", dbPath).Msg("Demo mode — seeded fake data")
 	}
 
+	// Initialize optional Supabase writer
+	sb, err := supabase.NewWriter()
+	if err != nil {
+		logger.Warn().Err(err).Msg("Supabase writer init failed — continuing without cloud sync")
+	}
+
 	sessionPath := filepath.Join(dataDir, "session.json")
 
 	app := &App{
 		Store:       store,
+		Supabase:    sb,
 		Logger:      logger,
 		DataDir:     dataDir,
 		SessionPath: sessionPath,
@@ -85,6 +94,7 @@ func (a *App) LoadAndConnect() error {
 
 	a.EventHandler = &client.EventHandler{
 		Store:       a.Store,
+		Supabase:    a.Supabase,
 		Logger:      a.Logger,
 		SessionPath: a.SessionPath,
 		Client:      cli,
@@ -120,6 +130,9 @@ func (a *App) Unpair() error {
 func (a *App) Close() {
 	if a.Client != nil {
 		a.Client.GM.Disconnect()
+	}
+	if a.Supabase != nil {
+		a.Supabase.Close()
 	}
 	if a.Store != nil {
 		a.Store.Close()
