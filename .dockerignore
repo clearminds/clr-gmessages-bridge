@@ -1,0 +1,16 @@
+.git/
+.github/
+macos/
+site/
+OpenMessage/
+*.md
+*.db
+*.dmg
+.vercel/
+.vercelignore
+vercel.json
+openmessage-demo
+session.json
+.env*.local
+.build/
+.claude-plugin/
