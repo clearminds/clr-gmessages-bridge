@@ -1,117 +1,109 @@
-# OpenMessage
+# clr-gmessages-bridge
 
-An open-source Google Messages client with MCP support. Read and send SMS/RCS from Claude Code, a web UI, or any MCP-compatible tool.
+Google Messages (SMS/RCS) bridge with Supabase sync. Fork of [MaxGhenis/openmessage](https://github.com/MaxGhenis/openmessage) with added Supabase integration for centralized message storage.
 
-Built on [mautrix/gmessages](https://github.com/mautrix/gmessages) (libgm) for the Google Messages protocol and [mcp-go](https://github.com/mark3labs/mcp-go) for the MCP server.
+Built on [mautrix/gmessages](https://github.com/mautrix/gmessages) (libgm) for the Google Messages protocol.
+
+## What we added (vs upstream openmessage)
+
+- **Supabase sync** — Messages, conversations, and contacts sync to Supabase via PostgREST RPC (alongside existing SQLite)
+- **Supabase Storage** — Media uploads to `gmessages-media` bucket with public URLs
+- **Auto-migration** — Schema applied on startup via `SUPABASE_DB_URL` (optional)
+- **`/api/download` endpoint** — Downloads media from Google Messages, uploads to Supabase Storage, returns public URL
+- **Dockerfile** — Multi-stage build for `ghcr.io/clearminds/clr-gmessages-bridge`
+- **CI/CD** — GitHub Actions for tests + Docker builds
+
+## Architecture
+
+```
+Phone (Google Messages app)
+    ↕ QR code pairing (libgm)
+clr-gmessages-bridge (this repo)
+    ↕ PostgREST RPC + Storage API
+Supabase (PostgreSQL + Storage)
+    ↕ supabase-py (read-only)
+clr-gmessages-mcp (Python, FastMCP)
+    ↕ MCP tools
+Claude
+```
 
 ## Quick start
 
 ### Prerequisites
 
-- **Go 1.22+** ([install](https://go.dev/dl/))
+- **Go 1.24+** ([install](https://go.dev/dl/))
 - **Google Messages** on your Android phone
+- **Supabase project** (optional — works without it, just uses local SQLite)
 
-### 1. Clone and build
+### 1. Build
 
 ```bash
-git clone https://github.com/MaxGhenis/openmessage.git
-cd openmessage
-go build -o openmessage .
+go build -o gmessages-bridge .
 ```
 
 ### 2. Pair with your phone
 
 ```bash
-./openmessage pair
+./gmessages-bridge pair
 ```
 
-A QR code appears in your terminal. On your phone, open **Google Messages > Settings > Device pairing > Pair a device** and scan it. The session saves to `~/.local/share/openmessage/session.json`.
+Scan the QR code in Google Messages > Settings > Device pairing.
 
 ### 3. Start the server
 
 ```bash
-./openmessage serve
+# Without Supabase (local SQLite only)
+./gmessages-bridge serve
+
+# With Supabase sync
+export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_KEY="your-service-role-key"
+export SUPABASE_DB_URL="postgresql://..."  # optional, for auto-migration
+./gmessages-bridge serve
 ```
 
-This starts both:
-- **MCP server** on stdio (for Claude Code)
-- **Web UI** at [http://localhost:7007](http://localhost:7007)
+### 4. Docker
 
-### 4. Connect to Claude Code
-
-Add to `~/.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "openmessage": {
-      "command": "/path/to/openmessage",
-      "args": ["serve"]
-    }
-  }
-}
+```bash
+docker run -d \
+  -p 7007:7007 \
+  -v gmessages-data:/data \
+  -e SUPABASE_URL="..." \
+  -e SUPABASE_KEY="..." \
+  ghcr.io/clearminds/clr-gmessages-bridge:latest
 ```
 
-Restart Claude Code. The 7 tools appear automatically.
+## Environment variables
 
-## Features
-
-- **Read messages** — full conversation history, search, media
-- **Send messages** — SMS and RCS, including replies
-- **React to messages** — emoji reactions on any message
-- **Image/media display** — inline images with fullscreen viewer
-- **Web UI** — real-time conversation view at localhost:7007
-- **MCP tools** — 7 tools for Claude Code integration
-- **Local storage** — SQLite database, your data stays on your machine
-
-## MCP tools
-
-| Tool | Description |
-|------|-------------|
-| `get_messages` | Recent messages with filters (phone, date range, limit) |
-| `get_conversation` | Messages in a specific conversation |
-| `search_messages` | Full-text search across all messages |
-| `send_message` | Send SMS/RCS to a phone number |
-| `list_conversations` | List recent conversations |
-| `list_contacts` | List/search contacts |
-| `get_status` | Connection status and paired phone info |
-
-## Web UI
-
-The web UI runs at `http://localhost:7007` when the server is started. It provides:
-
-- Conversation list with search
-- Message view with images, reactions, and reply threads
-- Compose and send messages
-- React to messages (right-click)
-- Reply to messages (double-click)
-
-## Configuration
-
-| Env var | Default | Purpose |
-|---------|---------|---------|
+| Var | Default | Purpose |
+|-----|---------|---------|
+| `SUPABASE_URL` | *(none)* | Supabase project URL (enables sync) |
+| `SUPABASE_KEY` | *(none)* | Supabase service role key |
+| `SUPABASE_DB_URL` | *(none)* | PostgreSQL URL for auto-migration |
 | `OPENMESSAGES_DATA_DIR` | `~/.local/share/openmessage` | Data directory (DB + session) |
-| `OPENMESSAGES_LOG_LEVEL` | `info` | Log level (debug/info/warn/error/trace) |
-| `OPENMESSAGES_PORT` | `7007` | Web UI port |
+| `OPENMESSAGES_PORT` | `7007` | Web UI / API port |
+| `OPENMESSAGES_LOG_LEVEL` | `info` | Log level (debug/info/warn/error) |
 
-## Architecture
+## REST API
 
-- **libgm** handles the Google Messages protocol (pairing, encryption, long-polling)
-- **SQLite** (WAL mode, pure Go) stores messages, conversations, and contacts locally
-- Real-time events from the phone are written to SQLite as they arrive
-- Backfill fetches conversation history on startup
-- MCP tool handlers read from SQLite for queries, call libgm for sends
-- Auth tokens auto-refresh and persist to `session.json`
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/conversations` | GET | List conversations |
+| `/api/conversations/{id}/messages` | GET | Messages in a conversation |
+| `/api/search?q=...` | GET | Full-text search |
+| `/api/send` | POST | Send a message |
+| `/api/download` | POST | Download media → Supabase Storage |
+| `/api/status` | GET | Connection status |
+| `/api/media/{msg_id}` | GET | Stream media from Google Messages |
 
 ## Development
 
 ```bash
-go test ./...        # Run all tests
+go test ./...        # Run all tests (7 suites)
 go build .           # Build binary
-./openmessage pair  # Pair with phone
-./openmessage serve # Start server
+go vet ./...         # Lint
 ```
 
 ## License
 
-MIT
+AGPL-3.0 (required by libgm dependency)
